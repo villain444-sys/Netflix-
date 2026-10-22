@@ -1,18 +1,19 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from flask import Flask
+import threading
+import os
 
 # Yahan BotFather wala token dalo
-BOT_TOKEN = '8802171600:AAFE7mOmTbDR4gZsDsGuhkGgQmCW5YC1AaU'
+BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# User ka device choice save karne ke liye
 user_choices = {}
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
-    # 3 Buttons create kar rahe hain
     markup.add(
         InlineKeyboardButton("📱 MOBILE", callback_data="mobile"),
         InlineKeyboardButton("💻 PC/LAPTOP", callback_data="pc"),
@@ -22,7 +23,6 @@ def send_welcome(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
-    # User ne kya select kiya wo save kar lenge
     user_choices[call.message.chat.id] = call.data
     bot.send_message(call.message.chat.id, "Apna link send karo 🔗")
 
@@ -30,7 +30,6 @@ def callback_query(call):
 def process_link(message):
     chat_id = message.chat.id
     
-    # Check karenge ki user ne button dabaya hai ya direct link bhej diya
     if chat_id not in user_choices:
         bot.send_message(chat_id, "Bhai pehle /start daal kar device select karo.")
         return
@@ -39,7 +38,6 @@ def process_link(message):
     choice = user_choices[chat_id]
     new_link = original_link
 
-    # Agar link me 'browse' word hai tabhi replace karega
     if "browse" in original_link:
         if choice == "mobile":
             new_link = original_link.replace("browse", "unsupported")
@@ -49,13 +47,27 @@ def process_link(message):
             new_link = original_link.replace("browse", "tv9")
 
         bot.send_message(chat_id, f"✅ Yeh raha tumhara modify kiya hua link:\n\n{new_link}")
-        
-        # Kaam hone ke baad data clear kar do taaki agle link ke liye wapas button dabana pade
         del user_choices[chat_id]
     else:
         bot.send_message(chat_id, "❌ Is link me 'browse' word nahi hai. Netflix ka sahi token link bhejo.")
 
-# Bot ko 24/7 on rakhne ke liye
-print("Bot chalu ho gaya hai...")
-bot.infinity_polling()
-  
+# --- FLASK SERVER SETUP ---
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running on Render!"
+
+def run_flask():
+    # Render khud PORT assign karta hai, by default 8080 le lega
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    # Flask ko alag thread me chala rahe hain taaki bot block na ho
+    t = threading.Thread(target=run_flask)
+    t.start()
+    
+    print("Bot chalu ho gaya hai...")
+    bot.infinity_polling()
+    
