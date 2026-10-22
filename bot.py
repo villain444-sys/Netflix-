@@ -2,7 +2,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Yahan BotFather wala token dalo
-BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'
+BOT_TOKEN = '8802171600:AAFE7mOmTbDR4gZsDsGuhkGgQmCW5YC1AaU'
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # User ka device choice save karne ke liye
